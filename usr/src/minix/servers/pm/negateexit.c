@@ -1,5 +1,5 @@
-#include "mproc.h"
 #include "pm.h"
+#include "mproc.h"
 
 int do_negateexit(void) {
   int old_status_negate_value = mp->status_negated;
