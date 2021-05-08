@@ -1,0 +1,38 @@
+- strategia szeregowania
+- wywołanie systemowe
+
+Celem zadania jest zaimplementowanie strategii szeregowania lowest unique bid oraz dodanie wywołania systemowego, które umożliwi procesom wybór tej strategii.
+
+Każdy proces szeregowany tym algorytmem składa pewną ofertę (ang. bid), będącą liczbą całkowitą nieujemną, która powinna być przechowywana przez system operacyjny. Do wykonania zostaje wybrany proces, którego oferta jest najmniejszą liczbą niewskazaną przez żaden inny proces.
+
+Wszystkie procesy szeregowane zgodnie z algorytmem lowest unique bid mają ten sam ustalony priorytet AUCTION_Q,
+ co oznacza, że znajdują się w tej samej kolejce procesów gotowych do wykonania.
+
+W obrębie tej kolejki wybieramy proces do wykonania zgodnie z zasadami aukcji lowest unique bid, tj. wybieramy proces, który złożył najmniejszą unikalną ofertę. Jeśli takiego procesu nie ma, to wybieramy dowolny proces, który złożył jedną z najwyższych ofert.
+
+Dla przykładu, jeśli w kolejce AUCTION_Q mamy procesy p1, p2, p3, p4, p5 i p6, które złożyły oferty odpowiednio 20, 40, 50, 60, 20 i 50,
+to najpierw wykona się proces p2 (jako że 40 to najmniejsza spośród unikalnych ofert), potem p4, następnie w dowolnej kolejności p3 i p6, a na koniec, w dowolnej kolejności p1 i p5.
+
+Należy zapewnić prawidłowe umieszczenie procesu w kolejce w czasie szeregowania.
+
+Podczas działania procesy szeregowane zgodnie z nowym algorytmem nie zmieniają swojego priorytetu (kolejki) w odróżnieniu od zwykłych procesów szeregowanych domyślnie.
+Należy zadbać o to, aby zwykłym procesom nie był przydzielany priorytet AUCTION_Q.
+
+--------------------------
+
+Implementacja powinna zawierać:
+
+- Definicję stałej AUCTION_Q = 8 określającej priorytet procesów szeregowanych algorytmem lowest unique bid.
+
+- Nową funkcję systemową: int setbid(int bid).
+bid < 0 || bid > MAX_BID -> EINVAL
+bid > 0  -> szeregowanie procesu zostanie zmienione na algorytm lowest unique bid z ofertą równą bid
+bid == 0 -> Wartość 0 oznacza, że proces rezygnuje z szeregowania lowest unique bid i wraca do szeregowania domyślnego.
+
+ret ==  0 -> metoda szeregowania została zmieniona pomyślnie,
+ret == -1 -> w przeciwnym przypadku.
+
+Jeśli proces, który chce zmienić metodę szeregowania na lowest unique bid, jest już szeregowany zgodnie z tym algorytmem, to errno przyjmuje wartość EPERM.
+Podobnie powinno się stać, gdy proces, który chce zrezygnować z szeregowania lowest unique bid, wcale nie jest nim szeregowany.
+
+Bezpośrednio za nagłówkiem każdej funkcji, która została dodana lub zmieniona, należy dodać komentarz /* so_2021 */.

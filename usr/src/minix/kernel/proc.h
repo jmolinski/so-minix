@@ -273,6 +273,9 @@ struct proc {
 #define isusern(n)        ((n) >= 0)
 #define isrootsysn(n)	  ((n) == ROOT_SYS_PROC_NR)
 
+#define AUCTION_Q           8  /* queue of processes scheduled with lowest unique bid algorithm */
+#define MAX_BID           100  /* max bid value for processes in AUCTION_Q queue */
+
 #ifndef __ASSEMBLY__
 
 EXTERN struct proc proc[NR_TASKS + NR_PROCS];	/* process table */
