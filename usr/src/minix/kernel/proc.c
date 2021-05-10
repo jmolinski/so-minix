@@ -116,7 +116,7 @@ static void set_idle_name(char * name, int n)
 		break;							\
 	}
 
-void proc_init(void)
+void proc_init(void) /* so_2021 */
 {
 	struct proc * rp;
 	struct priv *sp;
@@ -134,6 +134,7 @@ void proc_init(void)
 		rp->p_scheduler = NULL;		/* no user space scheduler */
 		rp->p_priority = 0;		/* no priority */
 		rp->p_quantum_size_ms = 0;	/* no quantum size */
+                rp->bid = 0;                    /* not having a bid */
 
 		/* arch-specific initialization */
 		arch_proc_reset(rp);

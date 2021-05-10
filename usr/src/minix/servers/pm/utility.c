@@ -87,7 +87,7 @@ pid_t lpid;
 /*===========================================================================*
  *				nice_to_priority			     *
  *===========================================================================*/
-int nice_to_priority(int nice, unsigned* new_q)
+int nice_to_priority(int nice, unsigned* new_q) /* so_2021 */
 {
 	if (nice < PRIO_MIN || nice > PRIO_MAX) return(EINVAL);
 
@@ -97,6 +97,7 @@ int nice_to_priority(int nice, unsigned* new_q)
 	/* Neither of these should ever happen. */
 	if ((signed) *new_q < MAX_USER_Q) *new_q = MAX_USER_Q;
 	if (*new_q > MIN_USER_Q) *new_q = MIN_USER_Q;
+        if (*new_q == AUCTION_Q) *new_q -= 1;
 
 	return (OK);
 }

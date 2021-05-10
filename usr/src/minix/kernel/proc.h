@@ -131,6 +131,8 @@ struct proc {
 #if DEBUG_TRACE
   int p_schedules;
 #endif
+
+  int bid;    /* bid value, used for scheduling */
 };
 
 #endif /* __ASSEMBLY__ */

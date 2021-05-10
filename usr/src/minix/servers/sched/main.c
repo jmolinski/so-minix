@@ -18,7 +18,7 @@ struct machine machine;		/* machine info */
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-int main(void)
+int main(void) /* so_2021 */
 {
 	/* Main routine of the scheduler. */
 	message m_in;	/* the incoming message itself is kept here. */
@@ -70,6 +70,9 @@ int main(void)
 		case SCHEDULING_SET_NICE:
 			result = do_nice(&m_in);
 			break;
+                case SCHEDULING_SETBID:
+                        result = do_setbid(&m_in);
+                        break;
 		case SCHEDULING_NO_QUANTUM:
 			/* This message was sent from the kernel, don't reply */
 			if (IPC_STATUS_FLAGS_TEST(ipc_status,

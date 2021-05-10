@@ -90,5 +90,5 @@ int nice_to_priority(int nice, unsigned *new_q);
 int pm_isokendpt(int ep, int *proc);
 void tell_vfs(struct mproc *rmp, message *m_ptr);
 
-/* negateexit.c */
+/* setbid.c */
 int do_setbid(void);
