@@ -4,7 +4,7 @@
 /*===========================================================================*
  *			          do_schedctl			     *
  *===========================================================================*/
-int do_schedctl(struct proc * caller, message * m_ptr)
+int do_schedctl(struct proc * caller, message * m_ptr) /* so_2021 */
 {
 	struct proc *p;
 	uint32_t flags;
@@ -34,7 +34,7 @@ int do_schedctl(struct proc * caller, message * m_ptr)
 		cpu = m_ptr->m_lsys_krn_schedctl.cpu;
 
 		/* Try to schedule the process. */
-		if((r = sched_proc(p, priority, quantum, cpu) != OK))
+		if((r = sched_proc(p, priority, quantum, cpu, -1) != OK))
 			return r;
 		p->p_scheduler = NULL;
 	} else {

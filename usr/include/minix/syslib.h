@@ -38,7 +38,7 @@ int sys_exit(void);
 int sys_trace(int req, endpoint_t proc_ep, long addr, long *data_p);
 
 int sys_schedule(endpoint_t proc_ep, int priority, int quantum, int
-	cpu);
+	cpu, int bid);
 int sys_schedctl(unsigned flags, endpoint_t proc_ep, int priority, int
 	quantum, int cpu);
 

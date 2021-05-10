@@ -305,15 +305,6 @@ int do_nice(message *m_ptr)
  *===========================================================================*/
 int do_setbid(message *m_ptr) /* so_2021 */
 {
-  int bid = m_ptr->m_pm_sched_scheduling_setbid.bid;
-  if (bid < 0 || bid > MAX_BID) {
-    return EINVAL;
-  }
-
-  return OK;
-
-  // TODO so2137
-
   /* check who can send you requests */
   if (!accept_message(m_ptr)) {
     return EPERM;
@@ -327,26 +318,33 @@ int do_setbid(message *m_ptr) /* so_2021 */
   }
 
   struct schedproc *rmp = &schedproc[proc_nr_n];
-  //unsigned new_q = m_ptr->m_pm_sched_scheduling_set_nice.maxprio;  // TODO
-  unsigned new_q = rmp->priority;
-  if (new_q >= NR_SCHED_QUEUES) {
+
+  int bid = m_ptr->m_pm_sched_scheduling_setbid.bid;
+  if (bid < 0 || bid > MAX_BID) {
     return EINVAL;
   }
 
-  /* Store old value, in case we need to roll back the changes */
   unsigned old_q = rmp->priority;
+  if ((bid > 0 && old_q == AUCTION_Q) || (bid == 0 && old_q != AUCTION_Q)) {
+    return EPERM;
+  }
 
   /* Update the proc entry and reschedule the process */
-  rmp->priority = new_q;
+  if (bid == 0) {
+    rmp->priority = rmp->max_priority;
+  } else {
+    rmp->priority = AUCTION_Q;
+  }
 
   int rv;
-  if ((rv = schedule_process_local(rmp)) != OK) {
+  if ((rv = sys_schedule(rmp->endpoint, rmp->priority,
+                         -1, -1, bid)) != OK) {
     /* Something went wrong when rescheduling the process, roll
      * back the changes to proc struct */
     rmp->priority = old_q;
+    printf("PM: An error occurred when trying to schedule %d: %d\n",
+           rmp->endpoint, rv);
   }
-
-  // todo rmp->max_priority jak wylaczamy
 
   return rv;
 }
@@ -354,7 +352,7 @@ int do_setbid(message *m_ptr) /* so_2021 */
 /*===========================================================================*
  *				schedule_process			     *
  *===========================================================================*/
-static int schedule_process(struct schedproc * rmp, unsigned flags)
+static int schedule_process(struct schedproc * rmp, unsigned flags) /* so_2021 */
 {
 	int err;
 	int new_prio, new_quantum, new_cpu;
@@ -377,7 +375,7 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 		new_cpu = -1;
 
 	if ((err = sys_schedule(rmp->endpoint, new_prio,
-		new_quantum, new_cpu)) != OK) {
+		new_quantum, new_cpu, -1)) != OK) {
 		printf("PM: An error occurred when trying to schedule %d: %d\n",
 		rmp->endpoint, err);
 	}
