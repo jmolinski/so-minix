@@ -355,7 +355,7 @@ int do_setbid(message *m_ptr) /* so_2021 */
 static int schedule_process(struct schedproc * rmp, unsigned flags) /* so_2021 */
 {
 	int err;
-	int new_prio, new_quantum, new_cpu;
+	int new_prio, new_quantum, new_cpu, new_bid;
 
 	pick_cpu(rmp);
 
@@ -374,8 +374,10 @@ static int schedule_process(struct schedproc * rmp, unsigned flags) /* so_2021 *
 	else
 		new_cpu = -1;
 
+        new_bid = -1;
+
 	if ((err = sys_schedule(rmp->endpoint, new_prio,
-		new_quantum, new_cpu, -1)) != OK) {
+		new_quantum, new_cpu, new_bid)) != OK) {
 		printf("PM: An error occurred when trying to schedule %d: %d\n",
 		rmp->endpoint, err);
 	}

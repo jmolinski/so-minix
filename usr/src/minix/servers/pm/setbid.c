@@ -1,4 +1,4 @@
-#include "pm.h"  // TODO SO2137 this first
+#include "pm.h"
 #include "mproc.h"
 
 int do_setbid(void) /* so_2021 */
