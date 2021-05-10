@@ -988,8 +988,9 @@ typedef struct {
 	int quantum;
 	int priority;
 	int cpu;
+        int bid;
 
-	uint8_t padding[40];
+	uint8_t padding[36];
 } mess_lsys_krn_schedule;
 _ASSERT_MSG_SIZE(mess_lsys_krn_schedule);
 
@@ -1586,6 +1587,14 @@ typedef struct {
 	uint8_t padding[48];
 } mess_pm_sched_scheduling_set_nice;
 _ASSERT_MSG_SIZE(mess_pm_sched_scheduling_set_nice);
+
+typedef struct {
+  endpoint_t endpoint;
+  int bid;
+
+  uint8_t padding[48];
+} mess_pm_sched_scheduling_setbid;
+_ASSERT_MSG_SIZE(mess_pm_sched_scheduling_setbid);
 
 typedef struct {
 	int status;
@@ -2208,6 +2217,7 @@ typedef struct {
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;
 		mess_pm_lsys_sigs_signal m_pm_lsys_sigs_signal;
 		mess_pm_sched_scheduling_set_nice m_pm_sched_scheduling_set_nice;
+                mess_pm_sched_scheduling_setbid m_pm_sched_scheduling_setbid;
 		mess_readclock_lc_rtcdev m_readclock_lc_rtcdev;
 		mess_rs_init		m_rs_init;
 		mess_rs_pm_exec_restart	m_rs_pm_exec_restart;

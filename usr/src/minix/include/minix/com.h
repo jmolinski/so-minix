@@ -763,6 +763,7 @@
 #define SCHEDULING_STOP		(SCHEDULING_BASE+3)
 #define SCHEDULING_SET_NICE	(SCHEDULING_BASE+4)
 #define SCHEDULING_INHERIT	(SCHEDULING_BASE+5)
+#define SCHEDULING_SETBID	(SCHEDULING_BASE+6)
 
 /*===========================================================================*
  *              Messages for USB                                             *

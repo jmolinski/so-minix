@@ -23,7 +23,7 @@
 /*===========================================================================*
  *				do_fork					     *
  *===========================================================================*/
-int do_fork(struct proc * caller, message * m_ptr)
+int do_fork(struct proc * caller, message * m_ptr) /* so_2021 */
 {
 /* Handle sys_fork().
  * m_lsys_krn_sys_fork.endpt has forked.
@@ -95,6 +95,7 @@ int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_kcall_cycles = 0;
   rpc->p_kipc_cycles = 0;
   rpc->p_signal_received = 0;
+  rpc->bid = 0;
 
   /* If the parent is a privileged process, take away the privileges from the 
    * child process and inhibit it from running by setting the NO_PRIV flag.

@@ -87,7 +87,7 @@ static void pick_cpu(struct schedproc * proc)
  *				do_noquantum				     *
  *===========================================================================*/
 
-int do_noquantum(message *m_ptr)
+int do_noquantum(message *m_ptr) /* so_2021 */
 {
 	register struct schedproc *rmp;
 	int rv, proc_nr_n;
@@ -99,8 +99,11 @@ int do_noquantum(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
-	if (rmp->priority < MIN_USER_Q) {
+	if (rmp->priority < MIN_USER_Q && rmp->priority != AUCTION_Q) {
 		rmp->priority += 1; /* lower priority */
+                if (rmp->priority == AUCTION_Q) {
+                    rmp->priority += 1;
+                }
 	}
 
 	if ((rv = schedule_process_local(rmp)) != OK) {
@@ -140,7 +143,7 @@ int do_stop_scheduling(message *m_ptr)
 /*===========================================================================*
  *				do_start_scheduling			     *
  *===========================================================================*/
-int do_start_scheduling(message *m_ptr)
+int do_start_scheduling(message *m_ptr) /* so_2021 */
 {
 	register struct schedproc *rmp;
 	int rv, proc_nr_n, parent_nr_n;
@@ -208,6 +211,9 @@ int do_start_scheduling(message *m_ptr)
 			return rv;
 
 		rmp->priority = schedproc[parent_nr_n].priority;
+                if (rmp->priority == AUCTION_Q) {
+                    rmp->priority = rmp->max_priority;
+                }
 		rmp->time_slice = schedproc[parent_nr_n].time_slice;
 		break;
 		
@@ -295,12 +301,61 @@ int do_nice(message *m_ptr)
 }
 
 /*===========================================================================*
+ *				do_setbid				     *
+ *===========================================================================*/
+int do_setbid(message *m_ptr) /* so_2021 */
+{
+  /* check who can send you requests */
+  if (!accept_message(m_ptr)) {
+    return EPERM;
+  }
+
+  int proc_nr_n;
+  if (sched_isokendpt(m_ptr->m_pm_sched_scheduling_set_nice.endpoint, &proc_nr_n) != OK) {
+    printf("SCHED: WARNING: got an invalid endpoint in OoQ msg "
+           "%d\n", m_ptr->m_pm_sched_scheduling_set_nice.endpoint);
+    return EBADEPT;
+  }
+
+  struct schedproc *rmp = &schedproc[proc_nr_n];
+
+  int bid = m_ptr->m_pm_sched_scheduling_setbid.bid;
+  if (bid < 0 || bid > MAX_BID) {
+    return EINVAL;
+  }
+
+  unsigned old_q = rmp->priority;
+  if ((bid > 0 && old_q == AUCTION_Q) || (bid == 0 && old_q != AUCTION_Q)) {
+    return EPERM;
+  }
+
+  /* Update the proc entry and reschedule the process */
+  if (bid == 0) {
+    rmp->priority = rmp->max_priority;
+  } else {
+    rmp->priority = AUCTION_Q;
+  }
+
+  int rv;
+  if ((rv = sys_schedule(rmp->endpoint, rmp->priority,
+                         -1, -1, bid)) != OK) {
+    /* Something went wrong when rescheduling the process, roll
+     * back the changes to proc struct */
+    rmp->priority = old_q;
+    printf("PM: An error occurred when trying to schedule %d: %d\n",
+           rmp->endpoint, rv);
+  }
+
+  return rv;
+}
+
+/*===========================================================================*
  *				schedule_process			     *
  *===========================================================================*/
-static int schedule_process(struct schedproc * rmp, unsigned flags)
+static int schedule_process(struct schedproc * rmp, unsigned flags) /* so_2021 */
 {
 	int err;
-	int new_prio, new_quantum, new_cpu;
+	int new_prio, new_quantum, new_cpu, new_bid;
 
 	pick_cpu(rmp);
 
@@ -319,8 +374,10 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 	else
 		new_cpu = -1;
 
+        new_bid = -1;
+
 	if ((err = sys_schedule(rmp->endpoint, new_prio,
-		new_quantum, new_cpu)) != OK) {
+		new_quantum, new_cpu, new_bid)) != OK) {
 		printf("PM: An error occurred when trying to schedule %d: %d\n",
 		rmp->endpoint, err);
 	}
@@ -349,15 +406,18 @@ void init_scheduling(void)
  * quantum. This function will find all proccesses that have been bumped down,
  * and pulls them back up. This default policy will soon be changed.
  */
-static void balance_queues(minix_timer_t *tp)
+static void balance_queues(minix_timer_t *tp) /* so_2021 */
 {
 	struct schedproc *rmp;
 	int proc_nr;
 
 	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-		if (rmp->flags & IN_USE) {
+		if (rmp->flags & IN_USE && rmp->priority != AUCTION_Q) {
 			if (rmp->priority > rmp->max_priority) {
 				rmp->priority -= 1; /* increase priority */
+                                if (rmp->priority == AUCTION_Q) {
+                                    rmp->priority -= 1;
+                                }
 				schedule_process_local(rmp);
 			}
 		}

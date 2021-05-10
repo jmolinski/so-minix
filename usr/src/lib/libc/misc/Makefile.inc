@@ -8,3 +8,4 @@ SRCS+=	initfini.c
 
 # for -fstack-protector
 SRCS+=	stack_protector.c
+SRCS+=  stack_protector.c setbid.c

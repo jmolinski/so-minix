@@ -116,7 +116,7 @@ static void set_idle_name(char * name, int n)
 		break;							\
 	}
 
-void proc_init(void)
+void proc_init(void) /* so_2021 */
 {
 	struct proc * rp;
 	struct priv *sp;
@@ -134,6 +134,7 @@ void proc_init(void)
 		rp->p_scheduler = NULL;		/* no user space scheduler */
 		rp->p_priority = 0;		/* no priority */
 		rp->p_quantum_size_ms = 0;	/* no quantum size */
+                rp->bid = 0;                    /* not having a bid */
 
 		/* arch-specific initialization */
 		arch_proc_reset(rp);
@@ -1711,7 +1712,7 @@ void dequeue(struct proc *rp)
 /*===========================================================================*
  *				pick_proc				     * 
  *===========================================================================*/
-static struct proc * pick_proc(void)
+static struct proc * pick_proc(void)  /* so_2021 */
 {
 /* Decide who to run now.  A new process is selected an returned.
  * When a billable process is selected, record it in 'bill_ptr', so that the 
@@ -1728,15 +1729,51 @@ static struct proc * pick_proc(void)
    * If there are no processes ready to run, return NULL.
    */
   rdy_head = get_cpulocal_var(run_q_head);
-  for (q=0; q < NR_SCHED_QUEUES; q++) {	
-	if(!(rp = rdy_head[q])) {
-		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
-		continue;
-	}
-	assert(proc_is_runnable(rp));
-	if (priv(rp)->s_flags & BILLABLE)	 	
-		get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
-	return rp;
+  for (q = 0; q < NR_SCHED_QUEUES; q++) {
+    if (!(rp = rdy_head[q])) {
+      TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
+      continue;
+    }
+
+    if (q == AUCTION_Q) {
+      /* Lowest unique bid algorithm.
+       * Pick the process with the lowest unique bid. If no such process exists,
+       * pick any of the processes with the highest bid value. */
+      int processes_with_bid_count[MAX_BID];
+      struct proc *process_with_bid[MAX_BID];
+      for (int i = 0; i < MAX_BID; i++) {
+        processes_with_bid_count[i] = 0;
+        process_with_bid[i] = NULL;
+      }
+
+      do {
+        assert(rp->bid > 0);
+        int bid_index = rp->bid - 1;
+        processes_with_bid_count[bid_index] += 1;
+        process_with_bid[bid_index] = rp;
+
+        rp = rp->p_nextready;
+      } while (rp != NULL);
+
+      rp = NULL;
+      for (int i = 0; i < MAX_BID; i++) {
+        if (rp == NULL && processes_with_bid_count[i] == 1) {
+          rp = process_with_bid[i];
+        }
+      }
+      for (int i = MAX_BID - 1; i >= 0; i--) {
+        if (rp == NULL && processes_with_bid_count[i] > 1) {
+          rp = process_with_bid[i];
+        }
+      }
+      assert(rp != NULL);
+    }
+
+    assert(proc_is_runnable(rp));
+    if (priv(rp)->s_flags & BILLABLE) {
+      get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
+    }
+    return rp;
   }
   return NULL;
 }

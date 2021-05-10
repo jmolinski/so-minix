@@ -4,11 +4,11 @@
 /*===========================================================================*
  *			          do_schedctl			     *
  *===========================================================================*/
-int do_schedctl(struct proc * caller, message * m_ptr)
+int do_schedctl(struct proc * caller, message * m_ptr) /* so_2021 */
 {
 	struct proc *p;
 	uint32_t flags;
-	int priority, quantum, cpu;
+	int priority, quantum, cpu, bid;
 	int proc_nr;
 	int r;
 
@@ -32,9 +32,10 @@ int do_schedctl(struct proc * caller, message * m_ptr)
 		priority = m_ptr->m_lsys_krn_schedctl.priority;
 		quantum = m_ptr->m_lsys_krn_schedctl.quantum;
 		cpu = m_ptr->m_lsys_krn_schedctl.cpu;
+                bid = -1;
 
 		/* Try to schedule the process. */
-		if((r = sched_proc(p, priority, quantum, cpu) != OK))
+		if((r = sched_proc(p, priority, quantum, cpu, bid) != OK))
 			return r;
 		p->p_scheduler = NULL;
 	} else {

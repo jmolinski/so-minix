@@ -131,6 +131,8 @@ struct proc {
 #if DEBUG_TRACE
   int p_schedules;
 #endif
+
+  int bid;    /* bid value, used for scheduling */
 };
 
 #endif /* __ASSEMBLY__ */
@@ -272,6 +274,9 @@ struct proc {
 #define isuserp(p)        isusern((p) >= BEG_USER_ADDR)
 #define isusern(n)        ((n) >= 0)
 #define isrootsysn(n)	  ((n) == ROOT_SYS_PROC_NR)
+
+#define AUCTION_Q           8  /* queue of processes scheduled with lowest unique bid algorithm */
+#define MAX_BID           100  /* max bid value for processes in AUCTION_Q queue */
 
 #ifndef __ASSEMBLY__
 
